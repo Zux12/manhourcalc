@@ -225,6 +225,8 @@
         <input type="button" value="Calculate Available Manhours" onclick="calculateAvailableManhours()">
         <div id="availableManhoursOutput"></div>
         <div id="comparisonOutput"></div>
+        <div id="peopleNeededOutput"></div>
+
     </form>
 
 
@@ -353,6 +355,12 @@
                 comparisonText = `You need more manhours to perform the work.`;
             }
             document.getElementById("comparisonOutput").innerHTML = `Difference between Available and Needed Manhours: ${comparison.toFixed(2)} (${comparisonText})`;
+        
+        // Calculate the number of people equivalent to the needed manhours
+    const manhoursPerPersonPerYear = (workingDays * 52 - weekends - publicHolidays - otherHolidays) * workingHours * efficiency;
+    const peopleNeeded = totalManhours / manhoursPerPersonPerYear;
+    document.getElementById("peopleNeededOutput").innerHTML = `Number of people equivalent to the needed manhours: ${peopleNeeded.toFixed(2)}`;
+
         }
     </script>
 </body>
