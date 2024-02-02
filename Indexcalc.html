@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Maintenance Sufficiency Manhours Estimator</title>
+    <style>
+
+#passwordPrompt {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        #passwordContainer {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+#countdownTimer {
+        font-weight: bold;
+        color: #38B09D;
+    }
+
+
+     body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+        padding: 20px;
+    }
+    h1 {
+        color: #38B09D;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .description, .brought-to-you {
+        text-align: center;
+        color: #666;
+        font-size: 0.9em;
+        margin-bottom: 20px;
+    }
+    form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    label {
+        display: block;
+        margin: 10px 0 5px;
+    }
+    input[type="number"], select, input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    input[type="button"] {
+        background-color: #38B09D;
+        color: white;
+        padding: 10px 15px;
+        margin: 10px 0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    input[type="button"]:hover {
+        background-color: #2a807d;
+    }
+    #output, #cumulativeOutput, #availableManhoursOutput, #comparisonOutput {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #e9e9e9;
+        border-radius: 4px;
+    }
+    .logo {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .logo img {
+        max-width: 200px;
+        height: auto;
+    }
+
+        .description {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+        .brought-to-you {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.8em;
+            margin-bottom: 20px;
+        }
+
+        .beta-version {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 0.8em;
+        color: #38B09D;
+    }
+    body {
+        position: relative;
+    }
+
+    #logoutButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background-color: #38B09D;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #logoutButton:hover {
+            background-color: #2a807d;
+        }
+    </style>
+    
+    
+</head>
+<body>
+
+    <!-- Logout Button -->
+    <button id="logoutButton" onclick="logout()">Logout</button>
+
+    <div id="passwordPrompt">
+        <div id="passwordContainer">
+            <h2>Enter Password to Access</h2>
+            <input type="password" id="passwordInput">
+            <button onclick="checkPassword()">Submit</button>
+            <p id="passwordError" style="color: red; display: none;">Incorrect password</p>
+        </div>
+    </div>
+
+    <div id="mainContent" style="display: none;">
+
+    <div class="logo">
+        <img src="https://seeklogo.com/images/P/petronas-logo-F27480A944-seeklogo.com.png" alt="Petronas Logo">
+    </div>
+    <div class="beta-version">BETA Version - Countdown Timer <span id="countdownTimer"></span></div>
+
+    <h1>Maintenance Sufficiency Manhours Estimator</h1>
+    
+    <!--<p class="description">This calculator is designed to determine if you have the necessary manhours to complete your scheduled tasks efficiently.</p>
+    -->
+    <p class="brought-to-you">Brought to you by GTS Instrument & Control</p>
+
+
+    <form id="manhoursForm">
+        <!-- Fields for the maintenance manhours calculator -->
+        <h2>Add Devices for Maintenance</h2>
+        <label for="deviceType">Select Device Type:</label>
+        <select id="deviceType" onchange="toggleCustomDeviceField()">
+            <option value="DP Transmitter">DP Transmitter</option>
+            <option value="Temperature Sensor">Temperature Sensor</option>
+            <option value="Flow Meter">Flow Meter</option>
+            <option value="Level Transmitter">Level Transmitter</option>
+            <option value="Control Valve">Control Valve</option>
+            <option value="PLC">PLC</option>
+            <option value="HMI">HMI</option>
+            <option value="Gas Detector">Gas Detector</option>
+            <option value="Custom">Other (Specify Below)</option>
+        </select>
+        <br>
+        <div id="customDeviceField" style="display: none;">
+            <label for="customDeviceType">Custom Device Type:</label>
+            <input type="text" id="customDeviceType">
+            <br>
+            <label for="customManhourEstimate">Manhour Estimate:</label>
+            <input type="number" id="customManhourEstimate" min="0" value="1">
+            <br>
+        </div>
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" min="1" value="1">
+        <br>
+        <label for="frequency">Maintenance Frequency per Year:</label>
+        <input type="number" id="frequency" min="1" value="1">
+        <br>
+        <input type="button" value="Add Device" onclick="addDevice()">
+        <input type="button" value="Calculate Total Manhours" onclick="calculateTotal()">
+        <input type="button" value="Reset" onclick="resetCalculator()">
+        <div id="output"></div>
+        <div id="cumulativeOutput"></div>
+
+        <!-- Fields for available manhours per year calculation -->
+        <h2>Calculate Available Manhours Per Year</h2>
+        <label for="manpower">Number of Manpower:</label>
+        <input type="number" id="manpower" value="6">
+        <br>
+        <label for="workingDays">Number of Working Days per Week:</label>
+        <input type="number" id="workingDays" value="5">
+        <br>
+        <label for="workingHours">Number of Working Hours per Day:</label>
+        <input type="number" id="workingHours" value="8">
+        <br>
+        <label for="weekends">Number of Weekend days in a Year:</label>
+        <input type="number" id="weekends" value="104">
+        <br>
+        <label for="publicHolidays">Number of Public Holidays in Malaysia:</label>
+        <input type="number" id="publicHolidays" value="14">
+        <br>
+        <label for="otherHolidays">Number of Other Holidays or Offdays (if any):</label>
+        <input type="number" id="otherHolidays" value="0">
+        <br>
+        <label for="efficiency">Preventive Maintenance Fraction (as a percentage e.g 60:40):</label>
+        <input type="number" id="efficiency" value="60">
+        <br>
+        <input type="button" value="Calculate Available Manhours" onclick="calculateAvailableManhours()">
+        <div id="availableManhoursOutput"></div>
+        <div id="comparisonOutput"></div>
+    </form>
+
+
+</div>
+
+
+
+    <script>
+
+        function logout() {
+        // Redirect to login page or reload current page
+        window.location.reload(); // Replace with your login page (window.location.href = 'login.html';) URL or use 'window.location.reload();' to reload the current page
+        }
+
+        function checkPassword() {
+        var password = document.getElementById('passwordInput').value;
+        var correctPassword = 'admin'; // Set your password here
+
+        if (password === correctPassword) {
+            document.getElementById('passwordPrompt').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        } else {
+            document.getElementById('passwordError').style.display = 'block';
+        }
+    }
+
+    window.onload = function() {
+        // Display the password prompt
+        document.getElementById('passwordPrompt').style.display = 'flex';
+
+        // Set up the countdown timer
+        var maxMinutes = 60; // Set the maximum number of minutes
+        var remainingTime = maxMinutes * 60; // Convert minutes to seconds
+        var countdownTimer = document.getElementById('countdownTimer');
+
+        var timer = setInterval(function() {
+            var minutes = Math.floor(remainingTime / 60);
+            var seconds = remainingTime % 60;
+            countdownTimer.textContent = minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+
+            if (remainingTime <= 0) {
+                clearInterval(timer);
+                alert('Your session has expired. You will now be redirected.');
+                window.location.href = 'expired.html'; // Redirect or take other actions
+            }
+            remainingTime--;
+        }, 1000);
+    };
+        
+        let totalManhours = 0;
+        const manhourEstimates = {
+            "DP Transmitter": 1,
+            "Temperature Sensor": 1,
+            "Flow Meter": 1.5,
+            "Level Transmitter": 1.5,
+            "Control Valve": 1,
+            "PLC": 1,
+            "HMI": 1.5,
+            "Gas Detector": 1
+        };
+
+        function toggleCustomDeviceField() {
+            const deviceType = document.getElementById("deviceType").value;
+            const customDeviceField = document.getElementById("customDeviceField");
+            if (deviceType === "Custom") {
+                customDeviceField.style.display = "block";
+            } else {
+                customDeviceField.style.display = "none";
+            }
+        }
+
+        function addDevice() {
+            let deviceType = document.getElementById("deviceType").value;
+            let manhours = 0;
+
+            if (deviceType === "Custom") {
+                deviceType = document.getElementById("customDeviceType").value;
+                const customManhourEstimate = parseFloat(document.getElementById("customManhourEstimate").value);
+                manhours = customManhourEstimate;
+            } else {
+                manhours = manhourEstimates[deviceType];
+            }
+
+            const quantity = parseInt(document.getElementById("quantity").value);
+            const frequency = parseInt(document.getElementById("frequency").value);
+
+            const totalDeviceManhours = manhours * quantity * frequency;
+            totalManhours += totalDeviceManhours;
+
+            const deviceDetails = `Added: ${quantity} x ${deviceType} with a frequency of ${frequency} times per year. Manhours for this device: ${totalDeviceManhours}`;
+            document.getElementById("output").innerHTML += `<p>${deviceDetails}</p>`;
+            updateCumulativeManhours();
+        }
+
+        function calculateTotal() {
+            document.getElementById("cumulativeOutput").innerHTML = `<p>Total Estimated Manhours: ${totalManhours}</p>`;
+        }
+
+        function resetCalculator() {
+            totalManhours = 0;
+            document.getElementById("output").innerHTML = '';
+            updateCumulativeManhours();
+        }
+
+        function updateCumulativeManhours() {
+            document.getElementById("cumulativeOutput").innerHTML = `<p>Cumulative Total Manhours: ${totalManhours}</p>`;
+        }
+
+        function calculateAvailableManhours() {
+            const manpower = parseInt(document.getElementById("manpower").value);
+            const workingDays = parseInt(document.getElementById("workingDays").value);
+            const workingHours = parseInt(document.getElementById("workingHours").value);
+            const weekends = parseInt(document.getElementById("weekends").value);
+            const publicHolidays = parseInt(document.getElementById("publicHolidays").value);
+            const otherHolidays = parseInt(document.getElementById("otherHolidays").value);
+            const efficiency = parseFloat(document.getElementById("efficiency").value) / 100;
+
+            const totalWorkingHours = manpower * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * workingHours;
+            const availableManhours = totalWorkingHours * efficiency;
+
+            document.getElementById("availableManhoursOutput").innerHTML = `Available Manhours per Year: ${availableManhours.toFixed(2)}`;
+
+            const comparison = availableManhours - totalManhours;
+            let comparisonText = `You have enough manhours available to perform the work.`;
+            if (comparison < 0) {
+                comparisonText = `You need more manhours to perform the work.`;
+            }
+            document.getElementById("comparisonOutput").innerHTML = `Difference between Available and Needed Manhours: ${comparison.toFixed(2)} (${comparisonText})`;
+        }
+    </script>
+</body>
+</html>
