@@ -131,6 +131,36 @@
         #logoutButton:hover {
             background-color: #2a807d;
         }
+
+        .tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.tooltip .tooltip-content {
+    visibility: hidden;
+    width: 220px;
+    background-color: #f9f9f9;
+    color: #000;
+    text-align: left;
+    border-radius: 6px;
+    padding: 15px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -110px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+}
+
     </style>
     
     
@@ -230,7 +260,17 @@
         <input type="button" value="Calculate Available Manhours" onclick="calculateAvailableManhours()">
         <div id="availableManhoursOutput"></div>
         <div id="comparisonOutput"></div>
-        <div id="peopleNeededOutput"></div>
+        <!--<div id="peopleNeededOutput">Number of people equivalent to the needed manhours: <span id="peopleNeededTooltip" class="tooltip">0.00</span></div>
+        -->
+<!-- Tooltip Trigger -->
+<div id="peopleNeededOutputContainer"> <!-- Changed from peopleNeededOutput to peopleNeededOutputContainer -->
+    Number of people equivalent to the needed manhours: 
+    <span class="tooltip" id="peopleNeededTooltip">0.00
+        <!-- Tooltip Content -->
+        <span class="tooltip-content" id="calculationDetails">Calculation details here.</span>
+    </span>
+</div>
+
 
     </form>
 
@@ -279,6 +319,22 @@
             }
             remainingTime--;
         }, 1000);
+
+// Initialize tooltip content
+const tooltipTrigger = document.getElementById('peopleNeededTooltip');
+            const tooltipContent = document.getElementById('calculationDetails');
+            
+            // Mouse hover event for the tooltip trigger
+            tooltipTrigger.addEventListener('mouseover', function() {
+                tooltipContent.style.visibility = 'visible';
+                tooltipContent.style.opacity = '1';
+            });
+
+            tooltipTrigger.addEventListener('mouseout', function() {
+                tooltipContent.style.visibility = 'hidden';
+                tooltipContent.style.opacity = '0';
+            });
+
     };
         
         let totalManhours = 0;
@@ -341,32 +397,66 @@
         }
 
         function calculateAvailableManhours() {
-            const manpower = parseInt(document.getElementById("manpower").value);
-            const workingDays = parseInt(document.getElementById("workingDays").value);
-            const workingHours = parseInt(document.getElementById("workingHours").value);
-            const weekends = parseInt(document.getElementById("weekends").value);
-            const publicHolidays = parseInt(document.getElementById("publicHolidays").value);
-            const otherHolidays = parseInt(document.getElementById("otherHolidays").value);
-            const efficiency = parseFloat(document.getElementById("efficiency").value) / 100;
+    const manpower = parseInt(document.getElementById("manpower").value);
+    const workingDays = parseInt(document.getElementById("workingDays").value);
+    const workingHours = parseInt(document.getElementById("workingHours").value);
+    const weekends = parseInt(document.getElementById("weekends").value);
+    const publicHolidays = parseInt(document.getElementById("publicHolidays").value);
+    const otherHolidays = parseInt(document.getElementById("otherHolidays").value);
+    const efficiency = parseFloat(document.getElementById("efficiency").value) / 100;
 
-            const totalWorkingHours = manpower * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * workingHours;
-            const availableManhours = totalWorkingHours * efficiency;
-
-            document.getElementById("availableManhoursOutput").innerHTML = `Available Manhours per Year: ${availableManhours.toFixed(2)}`;
-
-            const comparison = availableManhours - totalManhours;
-            let comparisonText = `You have enough manhours available to perform the work.`;
-            if (comparison < 0) {
-                comparisonText = `You need more manhours to perform the work.`;
-            }
-            document.getElementById("comparisonOutput").innerHTML = `Difference between Available and Needed Manhours: ${comparison.toFixed(2)} (${comparisonText})`;
-        
-        // Calculate the number of people equivalent to the needed manhours
-    const manhoursPerPersonPerYear = (workingDays * 52 - weekends - publicHolidays - otherHolidays) * workingHours * efficiency;
+    const totalWorkingHours = manpower * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * workingHours;
+    const availableManhours = totalWorkingHours * efficiency;
+    const manhoursPerPersonPerYear = workingHours * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * efficiency;
     const peopleNeeded = totalManhours / manhoursPerPersonPerYear;
-    document.getElementById("peopleNeededOutput").innerHTML = `Number of people equivalent to the needed manhours: ${peopleNeeded.toFixed(2)}`;
 
-        }
+    // Update the DOM elements with the calculated values
+    document.getElementById("availableManhoursOutput").innerHTML = `Available Manhours per Year: ${availableManhours.toFixed(2)}`;
+
+    const comparison = availableManhours - totalManhours;
+    let comparisonText = comparison >= 0 ? "You have enough manhours available to perform the work." : "You need more manhours to perform the work.";
+    document.getElementById("comparisonOutput").innerHTML = `Difference between Available and Needed Manhours: ${comparison.toFixed(2)} (${comparisonText})`;
+
+
+    
+// Update the tooltip and people needed text
+// const detailedCalculationText = `Total manhours needed: ${totalManhours.toFixed(2)}. Available manhours per person per year: ${manhoursPerPersonPerYear.toFixed(2)}. People needed: ${peopleNeeded.toFixed(2)}`;
+
+    // Prepare detailed calculation text
+    const detailedCalculationText = `
+        <strong>Detailed Calculation:</strong><br>
+        Total manhours needed: ${totalManhours.toFixed(2)}<br>
+        <strong>Constants and Formulas:</strong><br>
+        - Manpower: ${manpower}<br>
+        - Working Days per Week: ${workingDays}<br>
+        - Working Hours per Day: ${workingHours}<br>
+        - Weekends per Year: ${weekends}<br>
+        - Public Holidays: ${publicHolidays}<br>
+        - Other Holidays: ${otherHolidays}<br>
+        - Preventive Maintenance Fraction: ${efficiency * 100}%<br>
+        <strong>Step by Step:</strong><br>
+        1. Calculate total working days per year: (Working Days per Week * 52 weeks) - Weekends - Public Holidays - Other Holidays<br>
+        2. Calculate total working hours: Manpower * Total working days * Working Hours per Day<br>
+        3. Adjust for preventive maintenance fraction: Total working hours * Preventive Maintenance Fraction<br>
+        4. Calculate people needed: Total manhours needed / (Available manhours per person per year)<br>
+        <strong>Result:</strong><br>
+        Available manhours per person per year: ${manhoursPerPersonPerYear.toFixed(2)}<br>
+        People needed: ${peopleNeeded.toFixed(2)}
+    `;
+    // Update the tooltip content
+    document.getElementById("calculationDetails").innerHTML = detailedCalculationText;
+  
+
+// Update the peopleNeededOutputContainer with the correct HTML structure for the tooltip
+document.getElementById("peopleNeededOutputContainer").innerHTML = `Number of people equivalent to the needed manhours: 
+    <span class="tooltip">${peopleNeeded.toFixed(2)}
+        <span class="tooltip-content">${detailedCalculationText}</span>
+    </span>`;
+
+}
+
+
+
     </script>
 </body>
 </html>
