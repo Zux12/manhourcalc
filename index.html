@@ -257,6 +257,9 @@
         <label for="efficiency">Preventive Maintenance Fraction (as a percentage e.g 60:40):</label>
         <input type="number" id="efficiency" value="60">
         <br>
+        <label for="otherActivities">Number of Hours on other activies e.g workpermit, approvals, JHA, JMS (default 1 hour/day):</label>
+        <input type="number" id="otherActivities" value="1">
+        <br>
         <input type="button" value="Calculate Available Manhours" onclick="calculateAvailableManhours()">
         <div id="availableManhoursOutput"></div>
         <div id="comparisonOutput"></div>
@@ -404,25 +407,21 @@ const tooltipTrigger = document.getElementById('peopleNeededTooltip');
     const publicHolidays = parseInt(document.getElementById("publicHolidays").value);
     const otherHolidays = parseInt(document.getElementById("otherHolidays").value);
     const efficiency = parseFloat(document.getElementById("efficiency").value) / 100;
+    const otherActivities = parseInt(document.getElementById("otherActivities").value);
 
-    const totalWorkingHours = manpower * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * workingHours;
+    const totalWorkingHours = manpower * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * (workingHours - otherActivities);
     const availableManhours = totalWorkingHours * efficiency;
-    const manhoursPerPersonPerYear = workingHours * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * efficiency;
+    const manhoursPerPersonPerYear = (workingHours - otherActivities) * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * efficiency;
     const peopleNeeded = totalManhours / manhoursPerPersonPerYear;
-
-    // Update the DOM elements with the calculated values
-    document.getElementById("availableManhoursOutput").innerHTML = `Available Manhours per Year: ${availableManhours.toFixed(2)}`;
 
     const comparison = availableManhours - totalManhours;
     let comparisonText = comparison >= 0 ? "You have enough manhours available to perform the work." : "You need more manhours to perform the work.";
+    let peopleText = comparison < 0 ? `Additional people needed: ${Math.abs(peopleNeeded).toFixed(2)}` : `Excessive people available: ${Math.abs(peopleNeeded - manpower).toFixed(2)}`;
+
+    document.getElementById("availableManhoursOutput").innerHTML = `Available Manhours per Year: ${availableManhours.toFixed(2)}`;
     document.getElementById("comparisonOutput").innerHTML = `Difference between Available and Needed Manhours: ${comparison.toFixed(2)} (${comparisonText})`;
+    document.getElementById("peopleNeededOutputContainer").innerHTML = peopleText;
 
-
-    
-// Update the tooltip and people needed text
-// const detailedCalculationText = `Total manhours needed: ${totalManhours.toFixed(2)}. Available manhours per person per year: ${manhoursPerPersonPerYear.toFixed(2)}. People needed: ${peopleNeeded.toFixed(2)}`;
-
-    // Prepare detailed calculation text
     const detailedCalculationText = `
         <strong>Detailed Calculation:</strong><br>
         Total manhours needed: ${totalManhours.toFixed(2)}<br>
@@ -438,13 +437,14 @@ const tooltipTrigger = document.getElementById('peopleNeededTooltip');
         1. Calculate total working days per year: (Working Days per Week * 52 weeks) - Weekends - Public Holidays - Other Holidays<br>
         2. Calculate total working hours: Manpower * Total working days * Working Hours per Day<br>
         3. Adjust for preventive maintenance fraction: Total working hours * Preventive Maintenance Fraction<br>
-        4. Calculate people needed: Total manhours needed / (Available manhours per person per year)<br>
+        4. Calculate people needed: Total manhours needed / Available manhours per person per year<br>
         <strong>Result:</strong><br>
         Available manhours per person per year: ${manhoursPerPersonPerYear.toFixed(2)}<br>
         People needed: ${peopleNeeded.toFixed(2)}
     `;
-    // Update the tooltip content
     document.getElementById("calculationDetails").innerHTML = detailedCalculationText;
+
+
   
 
 // Update the peopleNeededOutputContainer with the correct HTML structure for the tooltip
