@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <meta charset="UTF-8">
     <title>Maintenance Sufficiency Manhours Estimator</title>
     <style>
@@ -166,6 +169,7 @@
     
 </head>
 <body>
+    
 
     <!-- Logout Button -->
     <button id="logoutButton" onclick="logout()">Logout</button>
@@ -193,8 +197,7 @@
 
     <h1>Maintenance Sufficiency Manhours Estimator</h1>
     
-    <!--<p class="description">This calculator is designed to determine if you have the necessary manhours to complete your scheduled tasks efficiently.</p>
-    -->
+
     <p class="brought-to-you">Brought to you by GTS Instrument & Control</p>
 
 
@@ -263,8 +266,7 @@
         <input type="button" value="Calculate Available Manhours" onclick="calculateAvailableManhours()">
         <div id="availableManhoursOutput"></div>
         <div id="comparisonOutput"></div>
-        <!--<div id="peopleNeededOutput">Number of people equivalent to the needed manhours: <span id="peopleNeededTooltip" class="tooltip">0.00</span></div>
-        -->
+
 <!-- Tooltip Trigger -->
 <div id="peopleNeededOutputContainer"> <!-- Changed from peopleNeededOutput to peopleNeededOutputContainer -->
     Number of people equivalent to the needed manhours: 
@@ -282,7 +284,13 @@
 
 
 
-    <script>
+    <div id="calculationDetails"></div>
+
+
+
+<script>
+
+
 
         function logout() {
         // Redirect to login page or reload current page
@@ -323,6 +331,7 @@
             remainingTime--;
         }, 1000);
 
+  
 // Initialize tooltip content
 const tooltipTrigger = document.getElementById('peopleNeededTooltip');
             const tooltipContent = document.getElementById('calculationDetails');
@@ -339,7 +348,8 @@ const tooltipTrigger = document.getElementById('peopleNeededTooltip');
             });
 
     };
-        
+     
+
         let totalManhours = 0;
         const manhourEstimates = {
             "DP Transmitter": 1,
@@ -362,28 +372,7 @@ const tooltipTrigger = document.getElementById('peopleNeededTooltip');
             }
         }
 
-        function addDevice() {
-            let deviceType = document.getElementById("deviceType").value;
-            let manhours = 0;
 
-            if (deviceType === "Custom") {
-                deviceType = document.getElementById("customDeviceType").value;
-                const customManhourEstimate = parseFloat(document.getElementById("customManhourEstimate").value);
-                manhours = customManhourEstimate;
-            } else {
-                manhours = manhourEstimates[deviceType];
-            }
-
-            const quantity = parseInt(document.getElementById("quantity").value);
-            const frequency = parseInt(document.getElementById("frequency").value);
-
-            const totalDeviceManhours = manhours * quantity * frequency;
-            totalManhours += totalDeviceManhours;
-
-            const deviceDetails = `Added: ${quantity} x ${deviceType} with a frequency of ${frequency} times per year. Manhours for this device: ${totalDeviceManhours}`;
-            document.getElementById("output").innerHTML += `<p>${deviceDetails}</p>`;
-            updateCumulativeManhours();
-        }
 
         function calculateTotal() {
             document.getElementById("cumulativeOutput").innerHTML = `<p>Total Estimated Manhours: ${totalManhours}</p>`;
@@ -409,14 +398,15 @@ const tooltipTrigger = document.getElementById('peopleNeededTooltip');
     const efficiency = parseFloat(document.getElementById("efficiency").value) / 100;
     const otherActivities = parseInt(document.getElementById("otherActivities").value);
 
+    const totalWorkingDays = workingDays * 52 - weekends - publicHolidays - otherHolidays;
     const totalWorkingHours = manpower * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * (workingHours - otherActivities);
     const availableManhours = totalWorkingHours * efficiency;
     const manhoursPerPersonPerYear = (workingHours - otherActivities) * (workingDays * 52 - weekends - publicHolidays - otherHolidays) * efficiency;
     const peopleNeeded = totalManhours / manhoursPerPersonPerYear;
 
     const comparison = availableManhours - totalManhours;
-    let comparisonText = comparison >= 0 ? "You have enough manhours available to perform the work." : "You need more manhours to perform the work.";
-    let peopleText = comparison < 0 ? `Additional people needed: ${Math.abs(peopleNeeded).toFixed(2)}` : `Excessive people available: ${Math.abs(peopleNeeded - manpower).toFixed(2)}`;
+    let comparisonText = comparison >= 0 ? "<strong>You have enough manhours available to perform the work.</strong>" : "<strong>You need more manhours to perform the work.</strong>";
+    let peopleText = comparison < 0 ? `<strong>Additional people needed:</strong> ${Math.abs(peopleNeeded).toFixed(2)}` : `<strong>Excessive people available:</strong> ${Math.abs(peopleNeeded - manpower).toFixed(2)}`;
 
     document.getElementById("availableManhoursOutput").innerHTML = `Available Manhours per Year: ${availableManhours.toFixed(2)}`;
     document.getElementById("comparisonOutput").innerHTML = `Difference between Available and Needed Manhours: ${comparison.toFixed(2)} (${comparisonText})`;
@@ -442,21 +432,176 @@ const tooltipTrigger = document.getElementById('peopleNeededTooltip');
         Available manhours per person per year: ${manhoursPerPersonPerYear.toFixed(2)}<br>
         People needed: ${peopleNeeded.toFixed(2)}
     `;
-    document.getElementById("calculationDetails").innerHTML = detailedCalculationText;
+    //document.getElementById("calculationDetails").innerHTML = detailedCalculationText; //this will show the detailed calculation at the bottom of the screen. 
 
 
   
 
 // Update the peopleNeededOutputContainer with the correct HTML structure for the tooltip
+let roundedPeopleNeeded = Math.ceil(peopleNeeded);
+
 document.getElementById("peopleNeededOutputContainer").innerHTML = `Number of people equivalent to the needed manhours: 
-    <span class="tooltip">${peopleNeeded.toFixed(2)}
+    <span class="tooltip">${roundedPeopleNeeded}
         <span class="tooltip-content">${detailedCalculationText}</span>
     </span>`;
 
+    return availableManhours; // Return the calculated value
+
 }
+
+// Array to store added device data
+let deviceData = [];
+
+// Function to display monthly manhours on the webpage
+function displayMonthlyManhours(monthlyManhours) {
+    const monthlyManhoursContainer = document.getElementById('monthlyManhoursContainer');
+    monthlyManhoursContainer.innerHTML = ''; // Clear previous content
+
+    monthlyManhours.forEach((manhour, index) => {
+        const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][index];
+        monthlyManhoursContainer.innerHTML += `<p>${monthName}: ${manhour.toFixed(2)} manhours</p>`;
+    });
+}
+
+let monthlyManhours; // Declare this in the outer scope if multiple functions need to access it
+
+
+// Function to generate the graph
+function generateGraph() {
+
+    const yearlyAvailableManhours = calculateAvailableManhours(); // Get the total available manhours
+    const monthlyAvailableManhours = yearlyAvailableManhours / 12; // Distribute evenly across months for simplicity
+    const monthlyManhours = new Array(12).fill(0);
+    const deviceMonthlyManhours = {};
+
+
+
+    // Calculate the distribution for each device
+    deviceData.forEach(device => {
+        const monthlyDistribution = device.totalDeviceManhours / 12;
+        for (let i = 0; i < 12; i++) {
+            monthlyManhours[i] += monthlyDistribution;
+        }
+    });
+
+    // Normalize the data
+    const totalDeviceManhours = deviceData.reduce((sum, device) => sum + device.totalDeviceManhours, 0);
+    const normalizationFactor = totalDeviceManhours / monthlyManhours.reduce((sum, mh) => sum + mh, 0);
+
+    monthlyManhours.forEach((mh, index, arr) => {
+        arr[index] = mh * normalizationFactor;
+    });
+
+
+    // Adjust December based on surplus or need for additional work
+    const totalUsedManhours = monthlyManhours.reduce((sum, mh) => sum + mh, 0);
+    const surplusOrDeficit = yearlyAvailableManhours - totalUsedManhours;
+
+    // Adjust December manhours
+    monthlyManhours[11] += surplusOrDeficit;
+
+
+    // Use the monthlyManhours array to plot the graph
+    const ctx = document.getElementById('manhoursGraph').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            datasets: [{
+                label: 'PM Manhours Distribution',
+                data: monthlyManhours,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // Call the display function after the graph is generated
+    displayMonthlyManhours(monthlyManhours);
+}
+//generateGraph();
+
+function addDevice() {
+    // Your existing addDevice logic here
+
+    let deviceType = document.getElementById("deviceType").value;
+            let manhours = 0;
+
+            if (deviceType === "Custom") {
+                deviceType = document.getElementById("customDeviceType").value;
+                const customManhourEstimate = parseFloat(document.getElementById("customManhourEstimate").value);
+                manhours = customManhourEstimate;
+            } else {
+                manhours = manhourEstimates[deviceType];
+            }
+
+            const quantity = parseInt(document.getElementById("quantity").value);
+            const frequency = parseInt(document.getElementById("frequency").value);
+
+            const totalDeviceManhours = manhours * quantity * frequency;
+            totalManhours += totalDeviceManhours;
+
+            const deviceDetails = `Added: ${quantity} x ${deviceType} with a frequency of ${frequency} times per year. Manhours for this device: ${totalDeviceManhours}`;
+            document.getElementById("output").innerHTML += `<p>${deviceDetails}</p>`;
+            updateCumulativeManhours();
+
+
+    // Example of storing added device data (you need to adapt based on your logic)
+    deviceData.push({ deviceType, quantity, frequency, totalDeviceManhours });
+
+        // Log the current state of deviceData to the console
+        console.log(deviceData);
+}
+
+
+    // Normalize the data to ensure the total matches the sum of device manhours
+    const totalManhours1 = deviceData.reduce((acc, device) => acc + device.manhours * device.quantity, 0);
+    const monthlyTotal = monthlyManhours.reduce((acc, val) => acc + val, 0);
+    const normalizationFactor = totalManhours1 / monthlyTotal;
+
+    for (let i = 0; i < monthlyManhours.length; i++) {
+        monthlyManhours[i] *= normalizationFactor;
+    }
+
+    // Now, use the monthlyManhours array to plot the graph
+//    const ctx = document.getElementById('manhoursGraph').getContext('2d');
+//    const chart = new Chart(ctx, {
+//        type: 'bar',
+//        data: {
+//            labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+//            datasets: [{
+//                label: 'PM Manhours Distribution',
+//                data: monthlyManhours,
+//                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+//                borderColor: 'rgba(54, 162, 235, 1)',
+//                borderWidth: 1
+//            }]
+//        },
+//        options: {
+//            scales: {
+//                y: { beginAtZero: true }
+//            }
+//        }
+ //   });
+ //   displayMonthlyManhours();
+
 
 
 
     </script>
+
+    <!-- Additional Button for Graph Generation -->
+    <button id="generateGraphButton" onclick="generateGraph()">Generate Graph</button>
+    <!-- Canvas for Graph Display -->
+    <canvas id="manhoursGraph" width="400" height="400"></canvas>
+    <!-- Somewhere in your HTML body -->
+<div id="monthlyManhoursContainer"></div> <!--this would display the monthly manhours at the bottom-->
+
 </body>
 </html>
